@@ -36,6 +36,7 @@
 
 #include "FreeRTOS.h"
 #include "list.h"
+#include "safe_assert.h"
 
 /* The MPU ports require MPU_WRAPPERS_INCLUDED_FROM_API_FILE to be
  * defined for the header files above, but not in this file, in order to
@@ -214,6 +215,11 @@ void vListInsert( List_t * const pxList,
 
 UBaseType_t uxListRemove( ListItem_t * const pxItemToRemove )
 {
+    configSAFE_ASSERT(pxItemToRemove == NULL);
+    configSAFE_ASSERT(pxItemToRemove->pxNext == NULL);
+    configSAFE_ASSERT(pxItemToRemove->pxPrevious == NULL);
+    configSAFE_ASSERT(pxItemToRemove->pxContainer == NULL);
+
     /* The list item knows which list it is in.  Obtain the list from the list
      * item. */
     List_t * const pxList = pxItemToRemove->pxContainer;
@@ -223,17 +229,10 @@ UBaseType_t uxListRemove( ListItem_t * const pxItemToRemove )
     pxItemToRemove->pxNext->pxPrevious = pxItemToRemove->pxPrevious;
     pxItemToRemove->pxPrevious->pxNext = pxItemToRemove->pxNext;
 
-    /* Only used during decision coverage testing. */
-    mtCOVERAGE_TEST_DELAY();
-
     /* Make sure the index is left pointing to a valid item. */
     if( pxList->pxIndex == pxItemToRemove )
     {
         pxList->pxIndex = pxItemToRemove->pxPrevious;
-    }
-    else
-    {
-        mtCOVERAGE_TEST_MARKER();
     }
 
     pxItemToRemove->pxContainer = NULL;
